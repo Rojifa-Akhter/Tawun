@@ -17,10 +17,11 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->enum('role',['super_admin','provider','user'])->default('user');
+            $table->longText('provider_description')->nullable();
             $table->string('address')->nullable();
             $table->string('contact')->nullable();
-            $table->string('image')->nullable();
             $table->longText('cover_letter')->nullable();
+            $table->string('image')->nullable();
             $table->json('document')->nullable();
             $table->string('password');
             $table->string('otp')->nullable();
