@@ -234,16 +234,7 @@ class AuthController extends Controller
         return response()->json([
             'status'  => true,
             'message' => 'Profile updated successfully.',
-            'data'    => [
-                'id'        => $user->id,
-                'full_name' => $user->full_name,
-                'email'     => $user->email,
-                'address'   => $user->address,
-                'contact'   => $user->phone,
-                'image'     => $user->image,
-                'documents' => $user->document, // decoded JSON
-                'role'      => $user->role,
-            ],
+            'data'    => $user
         ], 200);
 
     }

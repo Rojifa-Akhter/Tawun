@@ -24,3 +24,10 @@ Route::group(['prefix' => 'auth'], function ($router) {
     });
 
 });
+//provider route
+Route::middleware('auth:api','provider')->group(function () {
+    Route::post('service_category', [AuthController::class, 'createServiceCategory']);
+    Route::post('update_service_category/{id}', [AuthController::class, 'updateServiceCategory']);
+    Route::get('service_category_list', [AuthController::class, 'ServiceCategoryList']);
+    Route::get('service_category_details/{id}', [AuthController::class, 'ServiceCategoryDetails']);
+});
