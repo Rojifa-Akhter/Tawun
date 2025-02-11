@@ -80,15 +80,10 @@ class AuthController extends Controller
             Log::error($e->getMessage());
         }
 
-        $message = match ($user->role) {
-            'Super Admin' => 'Welcome Super Admin! Please verify your email.',
-            'Provider' => 'Welcome Provider! Please verify your email.',
-            default => 'Welcome User! Please verify your email.',
-        };
-
         return response()->json([
             'status'  => true,
-            'message' => $message,
+            'message' => 'Registration Successful.Please verify your email!',
+            'data' =>$user
         ], 200);
     }
 
