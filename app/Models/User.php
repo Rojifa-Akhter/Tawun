@@ -1,8 +1,6 @@
 <?php
-
 namespace App\Models;
 
-use App\Http\Controllers\SupportAgent\InspectionSheetController;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -12,9 +10,9 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable,SoftDeletes;
+    use HasFactory, Notifiable, SoftDeletes;
 
-    protected $dates = ['deleted_at'];
+    protected $dates   = ['deleted_at'];
     protected $guarded = ['id'];
 
     /**
@@ -36,7 +34,7 @@ class User extends Authenticatable implements JWTSubject
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'          => 'hashed',
             // 'document' => 'array',
         ];
     }
@@ -50,7 +48,7 @@ class User extends Authenticatable implements JWTSubject
         return [];
     }
 
-
+// Accessor in User model
     public function getImageAttribute($image)
     {
         $defaultImage = 'default_user.png';
@@ -65,7 +63,5 @@ class User extends Authenticatable implements JWTSubject
             }, $documents);
         }
     }
-    
-
 
 }
