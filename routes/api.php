@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Provider\ServiceCategoryController;
+use App\Http\Controllers\Provider\ServiceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,5 +36,12 @@ Route::middleware(['auth:api', 'provider'])->group(function () {
     Route::post('update-subcategory/{id}', [ServiceCategoryController::class, 'updateSubcategory']);
     Route::delete('delete-subcategory/{id}', [ServiceCategoryController::class, 'deleteSubcategory']);
     Route::delete('delete-category/{id}', [ServiceCategoryController::class, 'deleteServiceCategory']);
+
+    //route for service
+    Route::post('create-service', [ServiceController::class, 'createServices']);
+    Route::post('update-service/{id}', [ServiceController::class, 'updateServices']);
+    Route::delete('delete-service/{id}', [ServiceController::class, 'deleteSubcategory']);
+    Route::get('get-all-services', [ServiceController::class, 'getServices']);
+    Route::get('get-services-details/{id}', [ServiceController::class, 'servicesDetails']);
 
 });
