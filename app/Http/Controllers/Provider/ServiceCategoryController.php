@@ -9,12 +9,6 @@ use Illuminate\Support\Facades\Validator;
 
 class ServiceCategoryController extends Controller
 {
-    //category list with subcategory
-    public function getCategory()
-    {
-        $categories = ServiceCategory::with('subcategories')->get();
-        return response()->json($categories);
-    }
     // Store a new category with its subcategory
     public function storeCategoryWithSubcategory(Request $request)
     {
@@ -157,12 +151,51 @@ class ServiceCategoryController extends Controller
     {
         $sub_category = ServiceSubCategory::find($id);
 
-        if (!$sub_category) {
-            return response()->json(['status'=>false, 'message'=>'SubCategory Not Found'],401);
+        if (! $sub_category) {
+            return response()->json(['status' => false, 'message' => 'SubCategory Not Found'], 401);
         }
 
         $sub_category->delete();
 
         return response()->json(['message' => 'Subcategory deleted successfully']);
     }
+    //delete category
+    public function deleteServiceCategory($id)
+    {
+        $category = ServiceCategory::find($id);
+
+        if (! $category) {
+            return response()->json(['status' => false, 'message' => 'Category Not Found'], 404);
+        }
+
+        // First, delete all associated subcategories
+        ServiceSubCategory::where('service_category_id', $category->id)->delete();
+
+        // Then, delete the category itself
+        $category->delete();
+
+        return response()->json(['status' => true, 'message' => 'Category and all its subcategories deleted successfully']);
+    }
+
+    //category list with subcategory
+    public function getCategory(Request $request)
+    {
+        $search = $request->input('search');
+
+        $category_list = ServiceCategory::with('subcategories');
+
+        // Apply search filter if provided
+        if ($search) {
+            $category_list = $category_list->where('ticket_type', $search);
+        }
+
+        // Get paginated result
+        $category_list = $category_list->paginate();
+
+        if ($category_list->isEmpty()) {
+            return response()->json(['status' => false, 'message' => 'There is no data in the category list'], 401);
+        }
+        return response()->json(['status' => true, 'data' => $category_list], 200);
+    }
+
 }
