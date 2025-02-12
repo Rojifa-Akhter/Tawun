@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('service_categories', function (Blueprint $table) {
             $table->id();
-            $table->string('service_category_name');
-            $table->json('image')->nullable();
+            $table->string('name');
+            $table->string('icon')->nullable();
             $table->timestamps();
         });
     }

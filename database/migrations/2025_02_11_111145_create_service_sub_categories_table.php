@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('service_sub_categories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('service_category_id')->constrained('service_categories')->cascadeOnDelete();
-            $table->json('service_sub_categories_name')->nullable();
-            $table->json('image')->nullable();
+            $table->string('name')->nullable();
+            $table->string('image')->nullable();
             $table->timestamps();
         });
     }

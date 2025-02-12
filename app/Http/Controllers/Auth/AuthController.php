@@ -21,7 +21,7 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
-        if (! $user) {
+        if (!$user) {
             return response()->json(['status' => false, 'message' => 'User Not Found'], 422);
         }
 
@@ -33,7 +33,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'full_name'            => 'required|string|max:255',
             'email'                => 'required|string|email|unique:users,email',
-            'provider_description' => 'required|string',
+            'provider_description' => 'nullable|string',
             'password'             => 'required|string|min:6',
             'address'              => 'nullable|string|max:255',
             'contact'              => 'nullable|string|max:15',
@@ -43,7 +43,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['status' => false, 'message' => $validator->errors()], 400);
+            return response()->json(['status' => false, 'message' => $validator->errors()], 422);
         }
 
         $new_name = null;
@@ -95,7 +95,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['status' => false, 'message' => $validator->errors()], 400);
+            return response()->json(['status' => false, 'message' => $validator->errors()], 422);
         }
         $user = User::where('otp', $request->otp)->first();
 
@@ -115,20 +115,30 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => 'error',
-            'error'  => 'Invalid OTP.'], 400);
+            'error'  => 'Invalid OTP.'], 401);
     }
     //login
     public function login(Request $request)
     {
+        // Validate required fields
+        $validator = Validator::make($request->all(), [
+            'email'    => 'required|email',
+            'password' => 'required',
+        ]);
+
+        // Return error if validation fails
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => $validator->errors()->first()], 422);
+        }
         $credentials = $request->only('email', 'password');
 
         $user = User::where('email', $request->email)->first();
         if (! $user) {
-            return response()->json(['status' => 'error', 'message' => 'Email not found.'], 422);
+            return response()->json(['status' => false, 'message' => 'Email not found.'], 403);
         }
 
         if (! $token = Auth::guard('api')->attempt($credentials)) {
-            return response()->json(['status' => 'error', 'message' => 'Invalid password.'], 401);
+            return response()->json(['status' => false, 'message' => 'Invalid password.'], 401);
         }
 
         return response()->json([
@@ -234,7 +244,7 @@ class AuthController extends Controller
         return response()->json([
             'status'  => true,
             'message' => 'Profile updated successfully.',
-            'data'    => $user
+            'data'    => $user,
         ], 200);
 
     }
