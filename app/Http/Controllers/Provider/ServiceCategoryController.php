@@ -19,31 +19,61 @@ class ServiceCategoryController extends Controller
     public function storeCategoryWithSubcategory(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'category_name'       => 'required|string|unique:service_categories,name',
+            'category_name'       => 'required|string',
             'sub_categories_name' => 'required|string',
             'icon'                => 'nullable',
             'image'               => 'nullable',
         ]);
 
-        if (! $validator) {
+        if ($validator->fails()) {
             return response()->json(['status' => false, 'message' => $validator->errors()], 422);
         }
 
-        $category = ServiceCategory::create([
-            'name' => $request->name,
-        ]);
+        //icon for category
+        $icon_name = null;
+        if ($request->hasFile('icon')) {
+            $icon      = $request->file('icon');
+            $extension = $icon->getClientOriginalExtension();
+            $icon_name = time() . '.' . $extension;
+            $icon->move(public_path('uploads/category_icons'), $icon_name);
+        }
+        //    return  $icon_name;
+        //image for subcategory
+        $new_name = null;
+        if ($request->hasFile('image')) {
+            $image     = $request->file('image');
+            $extension = $image->getClientOriginalExtension();
+            $new_name  = time() . '.' . $extension;
+            $image->move(public_path('uploads/sub_category_images'), $new_name);
+        }
+        // return $new_name;
 
+        // Check if category exists
+        $category = ServiceCategory::where('name', $request->category_name)->first();
+
+        if (! $category) {
+            // If category does not exist, create a new one
+            $category = ServiceCategory::create([
+                'name' => $request->category_name,
+                'icon' => $icon_name,
+            ]);
+        }
+
+        // Create subcategory
         $subcategory = ServiceSubCategory::create([
-            'name'                => $request->name,
+            'name'                => $request->sub_categories_name,
+            'image'               => $new_name,
             'service_category_id' => $category->id,
         ]);
 
         return response()->json([
+            'status'      => true,
             'message'     => 'Category and subcategory added successfully',
             'category'    => $category,
             'subcategory' => $subcategory,
-        ]);
+        ], 201);
     }
+
     // Store a new subcategory under a category
     public function storeSubcategory(Request $request, ServiceCategory $category)
     {

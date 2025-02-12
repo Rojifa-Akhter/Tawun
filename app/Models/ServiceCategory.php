@@ -10,6 +10,11 @@ class ServiceCategory extends Model
 
     public function subcategories()
     {
-        return $this->hasMany(ServiceSubCategory::class);
+        return $this->hasMany(ServiceSubCategory::class, 'service_category_id');
+    }
+    public function getIconAttribute($icon)
+    {
+        $defaultIcon = 'default_user.png';
+        return asset('uploads/category_icons/' . ($icon ?? $defaultIcon));
     }
 }
