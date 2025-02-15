@@ -63,5 +63,10 @@ class User extends Authenticatable implements JWTSubject
             }, $documents);
         }
     }
+    //connection with services
+    public function services()
+    {
+        return $this->hasMany(Services::class, 'provider_id');
+    }
 
 }

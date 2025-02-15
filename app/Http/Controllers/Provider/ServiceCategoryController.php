@@ -13,10 +13,11 @@ class ServiceCategoryController extends Controller
     public function storeCategoryWithSubcategory(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'category_name'       => 'required|string',
-            'sub_categories_name' => 'nullable|string',
-            'icon'                => 'nullable',
-            'image'               => 'nullable',
+            'category_name'          => 'required|string',
+            'icon'                   => 'nullable|file',
+            'sub_categories'         => 'required|array|min:1',
+            'sub_categories.*.name'  => 'required|string',
+            'sub_categories.*.image' => 'nullable|file',
         ]);
 
         if ($validator->fails()) {
@@ -26,41 +27,57 @@ class ServiceCategoryController extends Controller
         // Check if category exists
         $category = ServiceCategory::where('name', $request->category_name)->first();
 
-        if (! $category) {
+        // If category doesn't exist, create it
+        if (!$category) {
             $icon_name = null;
             if ($request->hasFile('icon')) {
-                $icon      = $request->file('icon');
+                $icon = $request->file('icon');
                 $extension = $icon->getClientOriginalExtension();
                 $icon_name = time() . '.' . $extension;
                 $icon->move(public_path('uploads/category_icons'), $icon_name);
             }
+
             $category = ServiceCategory::create([
                 'name' => $request->category_name,
                 'icon' => $icon_name,
             ]);
         }
 
-        // Create subcategory
-        $new_name = null;
-        if ($request->hasFile('image')) {
-            $image     = $request->file('image');
-            $extension = $image->getClientOriginalExtension();
-            $new_name  = time() . '.' . $extension;
-            $image->move(public_path('uploads/sub_category_images'), $new_name);
+        // Create subcategories
+        $subcategories = [];
+        foreach ($request->sub_categories as $subCategoryData) {
+            $new_name = null;
+
+            if ($request->hasFile('sub_categories.*.image')) {
+                $image = $subCategoryData['image'];
+                $extension = $image->getClientOriginalExtension();
+                $new_name = time() . '.' . $extension;
+                $image->move(public_path('uploads/sub_category_images'), $new_name);
+            }
+
+            // Create each subcategory
+            $subcategory = ServiceSubCategory::create([
+                'name' => $subCategoryData['name'],
+                'image' => $new_name,
+                'service_category_id' => $category->id,
+            ]);
+
+            $subcategories[] = $subcategory;
         }
-        $subcategory = ServiceSubCategory::create([
-            'name'                => $request->sub_categories_name,
-            'image'               => $new_name,
-            'service_category_id' => $category->id,
-        ]);
 
         return response()->json([
-            'status'      => true,
-            'message'     => 'Category and subcategory added successfully',
-            'category'    => $category,
-            'subcategory' => $subcategory,
+            'status' => true,
+            'message' => 'Category and subcategories added successfully',
+            'category' => $category,
+            'subcategories' => $subcategories,
         ], 201);
     }
+
+
+    // edit category with sub category
+
+
+
 
     // Store a new subcategory under a category
     public function storeSubcategory(Request $request)

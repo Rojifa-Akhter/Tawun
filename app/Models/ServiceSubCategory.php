@@ -10,8 +10,9 @@ class ServiceSubCategory extends Model
 
     public function category()
     {
-        return $this->belongsTo(ServiceCategory::class, 'service_category_id');
+        return $this->belongsTo(ServiceCategory::class);
     }
+
     public function getImageAttribute($image)
     {
         $defaultImage = 'default_user.png';

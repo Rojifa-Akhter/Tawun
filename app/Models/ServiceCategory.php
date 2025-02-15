@@ -8,9 +8,9 @@ class ServiceCategory extends Model
 {
     protected $guarded=['id'];
 
-    public function subcategories()
+    public function subCategories()
     {
-        return $this->hasMany(ServiceSubCategory::class, 'service_category_id');
+        return $this->hasMany(ServiceSubCategory::class);
     }
     public function getIconAttribute($icon)
     {
