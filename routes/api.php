@@ -31,8 +31,9 @@ Route::middleware(['auth:api', 'provider'])->group(function () {
 
     //add category
     Route::get('get-all-category', [ServiceCategoryController::class, 'getCategory']);
+    Route::get('get-all-subcategory', [ServiceCategoryController::class, 'getSubCategory']);
     Route::post('create-with-subcategory', [ServiceCategoryController::class, 'storeCategoryWithSubcategory']);
-    Route::post('create-subcategory', [ServiceCategoryController::class, 'storeSubcategory']);
+    Route::post('update-with-subcategory/{id}', [ServiceCategoryController::class, 'UpdateCategoryWithSubcategory']);
     Route::post('update-subcategory/{id}', [ServiceCategoryController::class, 'updateSubcategory']);
     Route::delete('delete-subcategory/{id}', [ServiceCategoryController::class, 'deleteSubcategory']);
     Route::delete('delete-category/{id}', [ServiceCategoryController::class, 'deleteServiceCategory']);

@@ -28,10 +28,10 @@ class ServiceCategoryController extends Controller
         $category = ServiceCategory::where('name', $request->category_name)->first();
 
         // If category doesn't exist, create it
-        if (!$category) {
+        if (! $category) {
             $icon_name = null;
             if ($request->hasFile('icon')) {
-                $icon = $request->file('icon');
+                $icon      = $request->file('icon');
                 $extension = $icon->getClientOriginalExtension();
                 $icon_name = time() . '.' . $extension;
                 $icon->move(public_path('uploads/category_icons'), $icon_name);
@@ -49,16 +49,16 @@ class ServiceCategoryController extends Controller
             $new_name = null;
 
             if ($request->hasFile('sub_categories.*.image')) {
-                $image = $subCategoryData['image'];
+                $image     = $subCategoryData['image'];
                 $extension = $image->getClientOriginalExtension();
-                $new_name = time() . '.' . $extension;
+                $new_name  = time() . '.' . $extension;
                 $image->move(public_path('uploads/sub_category_images'), $new_name);
             }
 
             // Create each subcategory
             $subcategory = ServiceSubCategory::create([
-                'name' => $subCategoryData['name'],
-                'image' => $new_name,
+                'name'                => $subCategoryData['name'],
+                'image'               => $new_name,
                 'service_category_id' => $category->id,
             ]);
 
@@ -66,44 +66,110 @@ class ServiceCategoryController extends Controller
         }
 
         return response()->json([
-            'status' => true,
-            'message' => 'Category and subcategories added successfully',
-            'category' => $category,
+            'status'        => true,
+            'message'       => 'Category and subcategories added successfully',
+            'category'      => $category,
             'subcategories' => $subcategories,
         ], 201);
     }
 
-
     // edit category with sub category
-
-
-
-
-    // Store a new subcategory under a category
-    public function storeSubcategory(Request $request)
+    public function UpdateCategoryWithSubcategory(Request $request, $categoryId)
     {
         $validator = Validator::make($request->all(), [
-            'name'        => 'required|string|max:255',
-            'category_id' => 'required|exists:service_categories,id',
-        ], [
-            'category_id.exists' => 'The selected category does not exist.', // Custom error message
+            'category_name'          => 'nullable|string',
+            'icon'                   => 'nullable|file',
+            'sub_categories'         => 'nullable|array',
+            'sub_categories.*.id'    => 'nullable|exists:service_sub_categories,id',
+            'sub_categories.*.name'  => 'nullable|string',
+            'sub_categories.*.image' => 'nullable|file',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['status' => false, 'message' => $validator->errors()], 422);
         }
 
-        $subcategory = ServiceSubCategory::create([
-            'name'                => $request->name,
-            'service_category_id' => $request->category_id,
-        ]);
-        $subcategory->load('category:id,name,icon');
+        // Find category or return error if not found
+        $category = ServiceCategory::find($categoryId);
+        if (! $category) {
+            return response()->json(['status' => false, 'message' => 'Category not found.'], 404);
+        }
+
+        // Update category name if provided
+        $category->name = $request->category_name ?? $category->name;
+
+        // Handle category icon update if new icon is uploaded
+        if ($request->hasFile('icon')) {
+            $existingIcon = $category->icon;
+
+            if ($existingIcon) {
+                $oldIcon  = parse_url($existingIcon);
+                $filePath = ltrim($oldIcon['path'], '/');
+                if (file_exists($filePath)) {
+                    unlink($filePath); // Delete the existing icon
+                }
+            }
+
+            $icon_name = null;
+            if ($request->hasFile('icon')) {
+                $icon      = $request->file('icon');
+                $extension = $icon->getClientOriginalExtension();
+                $icon_name = time() . '.' . $extension;
+                $icon->move(public_path('uploads/category_icons'), $icon_name);
+            }
+
+            $category->icon = $icon_name;
+        }
+
+        $category->save();
+
+        // Handle subcategories (update existing ones or create new ones)
+        $subcategories = [];
+        if ($request->has('sub_categories')) {
+            foreach ($request->sub_categories as $subCategoryData) {
+                $subcategory = isset($subCategoryData['id'])
+                ? ServiceSubCategory::find($subCategoryData['id'])
+                : new ServiceSubCategory();
+
+                // Skip subcategory if not found and no ID was given
+                if (isset($subCategoryData['id']) && ! $subcategory) {
+                    continue;
+                }
+
+                // Update subcategory
+                $subcategory->name                = $subCategoryData['name'] ?? $subcategory->name;
+                $subcategory->service_category_id = $category->id;
+
+                // Handle subcategory image update if new image is uploaded
+                if (isset($subCategoryData['image']) && $subCategoryData['image']) {
+                    // Remove old image if exists
+                    if ($subcategory->image) {
+                        $oldImage  = parse_url($subcategory->image);
+                        $imagePath = ltrim($oldImage['path'], '/');
+                        if (file_exists($imagePath)) {
+                            unlink($imagePath);
+                        }
+                    }
+
+                    // Upload new subcategory image
+                    $image     = $subCategoryData['image'];
+                    $extension = $image->getClientOriginalExtension();
+                    $new_name  = time() . '.' . $extension;
+                    $image->move(public_path('uploads/sub_category_images'), $new_name);
+                    $subcategory->image = $new_name;
+                }
+
+                $subcategory->save();
+                $subcategories[] = $subcategory;
+            }
+        }
 
         return response()->json([
-            'status'      => true,
-            'message'     => 'Subcategory added successfully',
-            'subcategory' => $subcategory,
-        ], 201);
+            'status'        => true,
+            'message'       => 'Category and subcategories updated/added successfully',
+            'category'      => $category,
+            'subcategories' => $subcategories,
+        ], 200);
     }
 
     // Update a subcategory and change its category if needed
@@ -111,8 +177,10 @@ class ServiceCategoryController extends Controller
     {
         try {
             $sub_category = ServiceSubCategory::with('category:id,name,icon')->findOrFail($id);
+
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['status' => false, 'message' => 'Sub Category Not Found'], 404);
+
+            return response()->json(['status' => false, 'message' => 'Sub Category Not Found'], 401);
         }
 
         $validator = Validator::make($request->all(), [
@@ -197,22 +265,41 @@ class ServiceCategoryController extends Controller
     //category list with subcategory
     public function getCategory(Request $request)
     {
-        $search = $request->input('search');
+        $perPage = $request->get('per_page', 10);
+        $search  = $request->input('search');
 
         $category_list = ServiceCategory::with('subcategories');
 
         // Apply search filter if provided
         if ($search) {
-            $category_list = $category_list->where('ticket_type', $search);
+            $category_list = $category_list->where('name', $search);
         }
 
         // Get paginated result
-        $category_list = $category_list->paginate();
+        $category_list = $category_list->paginate($perPage);
 
         if ($category_list->isEmpty()) {
             return response()->json(['status' => false, 'message' => 'There is no data in the category list'], 401);
         }
         return response()->json(['status' => true, 'data' => $category_list], 200);
+    }
+    public function getSubCategory(Request $request)
+    {
+        $search = $request->input('search');
+
+        $subcategory_list = ServiceSubCategory::with('category');
+
+        if ($search) {
+            $subcategory_list->where('name', 'like', "%$search%");
+        }
+
+        $subcategory_list = $subcategory_list->paginate();
+
+        if ($subcategory_list->isEmpty()) {
+            return response()->json(['status' => false, 'message' => 'There is no data in the subcategory list'], 401);
+        }
+
+        return response()->json(['status' => true, 'data' => $subcategory_list], 200);
     }
 
 }
