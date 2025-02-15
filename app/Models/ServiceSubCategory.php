@@ -11,6 +11,10 @@ class ServiceSubCategory extends Model
     {
         return $this->belongsTo(ServiceCategory::class, 'service_category_id');
     }
+    public function services()
+    {
+        return $this->belongsTo(Services::class, 'service_id');
+    }
 
     public function getImageAttribute($image)
     {

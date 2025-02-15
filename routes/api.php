@@ -41,8 +41,8 @@ Route::middleware(['auth:api', 'provider'])->group(function () {
     //route for service
     Route::post('create-service', [ServiceController::class, 'createServices']);
     Route::post('update-service/{id}', [ServiceController::class, 'updateServices']);
-    Route::delete('delete-service/{id}', [ServiceController::class, 'deleteSubcategory']);
-    Route::get('get-all-services', [ServiceController::class, 'getServices']);
+    Route::delete('delete-service/{id}', [ServiceController::class, 'deleteService']);
+    Route::get('get-all-services', [ServiceController::class, 'getService']);
     Route::get('get-services-details/{id}', [ServiceController::class, 'servicesDetails']);
 
 });

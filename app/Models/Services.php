@@ -20,4 +20,10 @@ class Services extends Model
     {
         return $this->belongsTo(ServiceSubCategory::class, 'service_sub_categories_id');
     }
+
+    public function getImageAttribute($image)
+    {
+        $defaultImage = 'default_user.png';
+        return asset('uploads/service_images/' . ($image ?? $defaultImage));
+    }
 }
